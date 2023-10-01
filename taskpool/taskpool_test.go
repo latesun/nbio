@@ -8,6 +8,7 @@ import (
 	"unsafe"
 
 	"github.com/lesismal/nbio/logging"
+	"go.uber.org/goleak"
 )
 
 const testLoopNum = 1024
@@ -60,4 +61,20 @@ func BenchmarkTaskPool(b *testing.B) {
 		}
 		wg.Wait()
 	}
+}
+
+func TestTaskPool(t *testing.T) {
+	defer goleak.VerifyNone(t)
+
+	p := New(32, 1024)
+	defer p.Stop()
+
+	wg := sync.WaitGroup{}
+	for i := 0; i < testLoopNum; i++ {
+		wg.Add(1)
+		p.Go(func() {
+			wg.Done()
+		})
+	}
+	wg.Wait()
 }

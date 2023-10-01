@@ -33,7 +33,7 @@ func (tp *TaskPool) fork(f func()) bool {
 					if f != nil {
 						tp.caller(f)
 					}
-				default:
+				case <-tp.chClose:
 					return
 				}
 			}
@@ -88,21 +88,5 @@ func New(maxConcurrent int, chQqueueSize int, v ...interface{}) *TaskPool {
 			}
 		}
 	}
-	go func() {
-		for {
-			select {
-			case f := <-tp.chQqueue:
-				if tp.fork(f) {
-					continue
-				}
-
-				if f != nil {
-					tp.caller(f)
-				}
-			case <-tp.chClose:
-				return
-			}
-		}
-	}()
 	return tp
 }
